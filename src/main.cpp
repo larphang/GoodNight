@@ -8,6 +8,27 @@ struct MonitorInfo {
 
 static std::vector<HWND> g_windows;
 static HHOOK g_keyboardHook = nullptr;
+static bool g_cursorHidden = false;
+
+void HideCursor() {
+    if (g_cursorHidden) {
+        return;
+    }
+
+    while (ShowCursor(FALSE) >= 0);
+
+    g_cursorHidden = true;
+}
+
+void ShowCursorAgain() {
+    if (!g_cursorHidden) {
+        return;
+    }
+
+    while (ShowCursor(TRUE) < 0);
+
+    g_cursorHidden = false;
+}
 
 void CloseAllWindows() {
     for (HWND window : g_windows) {
@@ -15,6 +36,8 @@ void CloseAllWindows() {
             DestroyWindow(window);
         }
     }
+
+    ShowCursorAgain();
 
     PostQuitMessage(0);
 }
@@ -133,6 +156,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int) {
     SetForegroundWindow(g_windows[0]);
     SetFocus(g_windows[0]);
 
+    HideCursor();
+
     g_keyboardHook = SetWindowsHookExW(WH_KEYBOARD_LL, KeyboardHookProc, hInstance, 0);
 
     if (!g_keyboardHook) {
@@ -162,6 +187,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR, int) {
     }
 
     g_windows.clear();
+
+    ShowCursorAgain();
 
     return 0;
 }
